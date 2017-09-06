@@ -25,6 +25,7 @@ public class ReceiptController {
 
     @POST
     public int createReceipt(@Valid @NotNull CreateReceiptRequest receipt) {
+
         return receipts.insert(receipt.merchant, receipt.amount);
     }
 
