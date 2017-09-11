@@ -1,4 +1,3 @@
-import controllers.HelloWorldController;
 import controllers.NetIdController;
 import controllers.ReceiptController;
 import controllers.TagController;
