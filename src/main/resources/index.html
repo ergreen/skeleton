@@ -2,33 +2,10 @@
 <html>
 
 <head>
-    <link rel="stylesheet" href="style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <!-- <link rel="stylesheet" href="style.css" /> -->
     <script data-require="jquery@*" data-semver="3.1.1" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <style>
-        #container {border: 1px solid brown;}
-        H1 {float: left;}
-
-        .button{
-            background-color:#55A;
-            border: 1px solid #229;
-            width: 100px;
-            float: right;
-            font-size: 2em;
-            color: white;
-            text-align: center;
-        }
-
-        #receiptList {
-            border: 1px solid green;
-            clear: both;
-        }
-
-        .receipt {
-            background-color: #eee;
-            margin-bottom: 5px;
-        }
-
-    </style>
     <script>
         // This is the idiomatic way to ensure that JQuery does not
         // execute until the page has loaded
@@ -38,22 +15,136 @@
             $.getJSON(api+"/receipts", function(receipts){
                 for(var i=0; i < receipts.length; i++) {
                     var receipt = receipts[i];
-                    $(`<div class="receipt">${receipt.merchantName}<div><span class="receiptTag">t1</span></div></div>`)
-                        .appendTo($("#receiptList"));
-                }
+                    var tagHtml = "";
+                    $.ajax({
+                        type: 'GET',
+                        url: `/tags/receipt/${receipt.id}`,
+                        dataType: 'json',
+                        success: function(serverTags) { for (var j=0; j < serverTags.length; j++) {
+                            tagHtml += `<div class="btn tag">${serverTags[j].tag}</div>`
+                            }
+                            tagHtml += '<div class="btn add-tag">+Tag</div>';
+                        },
+                        data: {},
+                        async: false
+                    });
 
+                    $(`<tr class="receipt">
+                        <td class="merchant">${receipt.merchantName}</td>
+                        <td class="amount">${receipt.value}</td>
+                        <td>${tagHtml}</td>
+                    </tr>`).appendTo($("#receiptList"));
+                }
+                $(".add-tag").click(function(event) {
+                    $(event.target).parent().append('<input class="tag_input"/>');
+                    $(".tag_input").keypress(function(e) {
+                        if (e.which == 13) {
+                            $.ajax({
+                                type: "PUT",
+                                url: `/tags/${$(this).val()}`,
+                                data: {},
+                                contentType: "application/json"
+                            })
+                            var tagVal = $(this).val();
+                            $(event.target).before(`<div id="${$(this).val()}" class="btn tagValue">${tagVal}</div>`)
+                            $(".tag_input").remove()
+                            $(`#${tagVal}`).click(function(e) {
+                                $.ajax({
+                                    type: "PUT",
+                                    url: `/tags/${$(this).val()}`,
+                                    data: {},
+                                    contentType: "application/json"
+                                })
+                                $(`#${tagVal}`).remove()
+                            })
+                        }
+                    })
+                })
+            })
+
+            $("#add-receipt").click(function() {
+                $("#new-receipt-form").toggle()
+            })
+
+            window.addTagClick = function() {
+                $(event.target).closest(".receipt").append('<input class="tag_input"/>').keypress(function(e) { console.log("in tag input")});
+            }
+
+            $("#save-receipt").click(function() {
+                var newReceipt = {
+                    merchant: $("#merchant").val(),
+                    amount: $("#amount").val()
+                }
+                $.ajax({
+                    type: "POST",
+                    url: "/receipts",
+                    data: JSON.stringify(newReceipt),
+                    contentType: "application/json"
+                })
+                $("#new-receipt-form").toggle();
+                $(`<tr class="receipt">
+                        <td class="merchant">${newReceipt.merchant}</td>
+                        <td class="amount">${newReceipt.amount}</td>
+                        <td><div class="btn add-tag">+Tag</div></td>
+                    </tr>`).appendTo($("#receiptList"));
+                $(".add-tag").click(function(event) {
+                    $(event.target).parent().append('<input class="tag_input"/>');
+                    $(".tag_input").keypress(function(e) {
+                        if (e.which == 13) {
+                            $.ajax({
+                                type: "PUT",
+                                url: `/tags/${$(this).val()}`,
+                                data: {},
+                                contentType: "application/json"
+                                 })
+                            var tagVal = $(this).val();
+                            $(event.target).before(`<div id="${tagVal}" class="btn tagValue">${tagVal}</div>`)
+                            $(".tag_input").remove()
+                            $(`#${tagVal}`).click(function(e) {
+                                $.ajax({
+                                    type: "PUT",
+                                    url: `/tags/${$(this).val()}`,
+                                    data: {},
+                                    contentType: "application/json"
+                                })
+                                $(`#${tagVal}`).remove()
+                            })
+                        }
+                    })
+                })
+            })
+
+            $("#cancel-receipt").click(function() {
+                $("#new-receipt-form").toggle()
             })
         })
     </script>
 </head>
 
 <body>
-<DIV id="container">
+<div id="container">
     <h1>My receipts</h1>
-    <div class="button">+</div>
-    <div id="receiptList">
+    <div class="btn" id="add-receipt">+</div>
+    <form id="new-receipt-form" style="display: none;">
+        <input id="merchant">
+        <input id="amount">
+        <div class="button" id="cancel-receipt">cancel</div>
+        <div class="button" id="save-receipt">save</div>
+    </form>
+    <div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Merchant</th>
+                    <th scope="col">$</th>
+                    <th scope="col">Tags</th>
+                </tr>
+            </thead>
+            <tbody id="receiptList"></tbody>
+        </table>
     </div>
-</DIV>
+</div>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" />
 </body>
 
 </html>

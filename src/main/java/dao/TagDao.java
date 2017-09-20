@@ -38,12 +38,6 @@ public class TagDao {
 
     }
 
-//    public List<ReceiptsRecord> getAllReceipts(String tag) {
-//        List<TagsRecord> receiptList = dsl.selectFrom(TAGS).where(TAGS.TAG.eq(tag)).fetch();
-//        List<ReceiptsRecord> returnReceipts = dsl.selectFrom(RECEIPTS).where(RECEIPTS.ID.in(receiptList)).fetch();
-//        return returnReceipts;
-//    }
-
     public List<ReceiptsRecord> getAllReceipts(String tag) {
         List<TagsRecord> receiptList = dsl.selectFrom(TAGS).where(TAGS.TAG.eq(tag)).fetch();
         //String receiptString = "TEST " + receiptList.size() + " ";
@@ -53,15 +47,11 @@ public class TagDao {
             returnReceipts.add(dsl.selectFrom(RECEIPTS).where(RECEIPTS.ID.eq(record.getReceiptId())).fetchOne());
         }
         return returnReceipts;
+    }
 
-        //List<ReceiptsRecord> returnReceipts = dsl.selectFrom(RECEIPTS).where(RECEIPTS.ID.in(receiptList)).fetch();
-//        receiptString += "--  NumReceipts=" + returnReceipts.size() + "--";
-//        for (ReceiptsRecord receipt : returnReceipts)
-//        {
-//            receiptString += receipt.getMerchant();
-//            receiptString += " ";
-//        }
-//        return receiptString;
+    public List<TagsRecord> getTags(Integer receipt) {
+        System.out.println(receipt);
+      return dsl.selectFrom(TAGS).where(TAGS.RECEIPT_ID.eq(receipt)).fetch();
     }
 
     public List<TagsRecord> getAllTags()  {

@@ -25,13 +25,6 @@ public class TagController {
         this.tags = tags;
     }
 
-    @GET
-    public List<TagResponse> testTag()
-    {
-        List<TagsRecord> tagRecords = tags.getAllTags();
-        return tagRecords.stream().map(TagResponse::new).collect(toList());
-    }
-
     @PUT
     @Path("/{tag}")
     public Integer toggleTag(@PathParam("tag") String tagName, Integer receiptId) {
@@ -46,5 +39,12 @@ public class TagController {
 
         List<ReceiptsRecord> receiptRecords = tags.getAllReceipts(tagName);
         return receiptRecords.stream().map(ReceiptResponse::new).collect(toList());
+    }
+
+    @GET
+    @Path("/receipt/{receipt}")
+    public List<TagResponse> getTagsForReceipt(@PathParam("receipt") String receiptId) {
+        List<TagsRecord> tagRecords = tags.getTags(Integer.parseInt(receiptId));
+        return tagRecords.stream().map(TagResponse::new).collect(toList());
     }
 }
