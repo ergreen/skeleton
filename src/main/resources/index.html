@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
     <style>
-        body {
+        body, table, th, td {
             text-align: center;
         }
 
@@ -138,6 +138,7 @@
 
             // IMAGE VIDEO CAPTURE LOGIC
             let imageCapture;
+            let track;
 
             $("#start-camera").click(function() {
                 $("#snap-pic-popup").show()
@@ -145,6 +146,8 @@
             })
 
             $("#take-pic-cancel").click(function() {
+                track.stop()
+                $("video").remove()
                 $("#snap-pic-popup").hide()
             })
 
@@ -152,11 +155,12 @@
                 $('video')[0].srcObject = mediaStream;
 
                 // Saving the track allows us to capture a photo
-                const track = mediaStream.getVideoTracks()[0];
+                track = mediaStream.getVideoTracks()[0];
                 imageCapture = new ImageCapture(track);
             }
 
             function startVideo() {
+                $("#vidwrap").append("<video autoplay></video>")
                 navigator.mediaDevices.getUserMedia()//{video: {facingMode: {exact: "environment"}}})
                     .then(attachMediaStream)
                     .catch(error => {
@@ -179,6 +183,8 @@
 
                         canvas.getContext('2d').drawImage(img, 0, 0);
                         const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
+                        track.stop()
+                        $("video").remove()
                         $.ajax({
                             url: "/images",
                             type: "POST",
@@ -221,10 +227,9 @@
     </form>
     <div id="snap-pic-popup" style="display: none;">
         <button id="take-pic-cancel">cancel</button>
-        <button id="take-pic" disabled="true">snap</button>
+        <button id="take-pic">snap</button>
         <br>
         <div id="vidwrap">
-            <video autoplay></video>
         </div>
     </div>
     <div>
