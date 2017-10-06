@@ -19,7 +19,7 @@
             margin: 20px 0;
         }
 
-        #start, #snapshot {
+        #start, #take-pic {
             height: 3em;
         }
     </style>
@@ -27,57 +27,6 @@
     <script>
         // This is the idiomatic way to ensure that JQuery does not
         // execute until the page has loaded
-        let imageCapture;
-
-        function attachMediaStream(mediaStream) {
-            $('video')[0].srcObject = mediaStream;
-
-            // Saving the track allows us to capture a photo
-            const track = mediaStream.getVideoTracks()[0];
-            imageCapture = new ImageCapture(track);
-        }
-
-        function startVideo() {
-            navigator.mediaDevices.getUserMedia({video: {facingMode: {exact: "environment"}}})
-                .then(attachMediaStream)
-                .catch(error => {
-                    navigator.mediaDevices.getUserMedia({video: true})
-                        .then(attachMediaStream)
-                        .catch(error => {
-                            console.log('you are fooked');
-                        })
-                })
-        }
-
-        function takeSnapshot() {
-            // create a CANVAS element that is same size as the image
-            imageCapture.takePhoto()
-                .then(blob => createImageBitmap(blob))
-                .then(img => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    canvas.getContext('2d').drawImage(img, 0, 0);
-                    const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
-                    $.ajax({
-                        url: "/images",
-                        type: "POST",
-                        data: base64EncodedImageData,
-                        contentType: "text/plain",
-                        success: function() {},
-                   })
-                    .then(response => {
-                        $('video').after(`<div>got response: <pre>${JSON.stringify(response)}</pre></div>`);
-                    })
-                    .always(() => console.log('request complete'));
-
-                    // For debugging, you can uncomment this to see the frame that was captured
-                    // $('BODY').append(canvas);
-                });
-
-        }
-
         $(function(){
             const api = ""; // <- do not need a root api URL if this page is served directly by the API
 
@@ -187,24 +136,97 @@
                 $("#new-receipt-form").toggle()
             })
 
-            $('#start').on('click', startVideo);
-            $('video').on('play', () => $('#snapshot').prop('disabled', false));
-            $('#snapshot').on('click', takeSnapshot);
+            // IMAGE VIDEO CAPTURE LOGIC
+            let imageCapture;
+
+            $("#start-camera").click(function() {
+                $("#snap-pic-popup").show()
+                startVideo()
+            })
+
+            $("#take-pic-cancel").click(function() {
+                $("#snap-pic-popup").hide()
+            })
+
+            function attachMediaStream(mediaStream) {
+                $('video')[0].srcObject = mediaStream;
+
+                // Saving the track allows us to capture a photo
+                const track = mediaStream.getVideoTracks()[0];
+                imageCapture = new ImageCapture(track);
+            }
+
+            function startVideo() {
+                navigator.mediaDevices.getUserMedia()//{video: {facingMode: {exact: "environment"}}})
+                    .then(attachMediaStream)
+                    .catch(error => {
+                        navigator.mediaDevices.getUserMedia({video: true})
+                            .then(attachMediaStream)
+                            .catch(error => {
+                                console.log('you are fooked');
+                            })
+                    })
+            }
+
+            function takeSnapshot() {
+                // create a CANVAS element that is same size as the image
+                imageCapture.takePhoto()
+                    .then(blob => createImageBitmap(blob))
+                    .then(img => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        const base64EncodedImageData = canvas.toDataURL('image/png').split(',')[1];
+                        $.ajax({
+                            url: "/images",
+                            type: "POST",
+                            data: base64EncodedImageData,
+                            contentType: "text/plain",
+                            success: function() {},
+                       })
+                        .then(response => {
+                            console.log(JSON.stringify(response))
+                            $("#merchant").val(response.merchantName)
+                            $("#amount").val(response.amount)
+                            $("#snap-pic-popup").hide()
+                            $("#new-receipt-form").show()
+                            //$('video').after(`<div>got response: <pre>${JSON.stringify(response)}</pre></div>`);
+                        })
+                        .always(() => console.log('request complete'));
+
+                        // For debugging, you can uncomment this to see the frame that was captured
+                        //$('BODY').append(canvas);
+                    });
+
+            }
+
+            $('video').on('play', () => $('#take-pic').prop('disabled', false));
+            $('#take-pic').on('click', takeSnapshot);
         });
     </script>
 </head>
 
 <body>
-<<<<<<< HEAD
 <div id="container">
     <h1>My receipts</h1>
     <div class="btn" id="add-receipt">+</div>
+    <div class="btn" id="start-camera">camera</div>
     <form id="new-receipt-form" style="display: none;">
         <input id="merchant">
         <input id="amount">
         <div class="button" id="cancel-receipt">cancel</div>
         <div class="button" id="save-receipt">save</div>
     </form>
+    <div id="snap-pic-popup" style="display: none;">
+        <button id="take-pic-cancel">cancel</button>
+        <button id="take-pic" disabled="true">snap</button>
+        <br>
+        <div id="vidwrap">
+            <video autoplay></video>
+        </div>
+    </div>
     <div>
         <table class="table">
             <thead>
@@ -219,14 +241,6 @@
     </div>
 </div>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" />
-=======
-<button id="start">Start Video</button>
-<button id="snapshot" disabled="true">Take a Snapshot!</button>
-<br>
-<div id="vidwrap">
-    <video autoplay></video>
-    </div>
->>>>>>> upstream/master
 </body>
 
 </html>

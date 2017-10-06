@@ -52,6 +52,20 @@ public class ReceiptImageController {
             // Sort text annotations by bounding polygon.  Top-most non-decimal text is the merchant
             // bottom-most decimal text is the total amount
             for (EntityAnnotation annotation : res.getTextAnnotationsList()) {
+                if (annotation.getDescription().length() > 10) continue;
+                BigDecimal parsedNum = null;
+                try {
+                    parsedNum =  new BigDecimal(annotation.getDescription().replace("$",""));
+                } catch(NumberFormatException ex) {
+                }
+
+                if (merchantName == null && parsedNum == null) {
+                    merchantName = annotation.getDescription();
+                }
+
+                if (parsedNum != null) {
+                    amount = parsedNum;
+                }
                 out.printf("Position : %s\n", annotation.getBoundingPoly());
                 out.printf("Text: %s\n", annotation.getDescription());
             }
